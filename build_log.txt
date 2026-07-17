@@ -1,6 +1,14 @@
 === 编译 main.c ===
 === 链接 ===
 === 生成 NACP ===
+NACPTOOL=/opt/devkitpro/tools/bin/nacptool
+nacptool rc=0
+--- build/ after nacp ---
+total 2956
+drwxr-xr-x 2 root root    4096 Jul 17 12:30 .
+drwxr-xr-x 7 1001 1001    4096 Jul 17 12:30 ..
+-rw-r--r-- 1 root root   24208 Jul 17 12:30 main.o
+-rwxr-xr-x 1 root root 3054720 Jul 17 12:30 wo1wan.elf
 === 生成 .nro ===
 Failed to open input nacp!
 EXIT_CODE=1
