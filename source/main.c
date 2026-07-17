@@ -11,6 +11,10 @@
  * Service initialization copied from wiliwili/borealis switch_wrapper.c:
  *   socketInitialize, nifmInitialize, plInitialize, setsys, set, psm, lbl.
  *
+ * Display handling: we exit the console BEFORE launching the Web Applet, then
+ * re-init it after the browser returns. This avoids the console and library
+ * applet fighting over the display, which can cause "Unable to use this feature".
+ *
  * Build: bash build.sh   Output: out/wo1wan.nro
  */
 
@@ -27,10 +31,7 @@ static const char *g_banner =
     "      wo1wan  -  Play web games on Switch\n"
     "  =============================================\n"
     "\n"
-    "  Opening browser, please wait...\n"
-    "\n"
-    "  Controls:\n"
-    "    A = re-open     + = quit\n"
+    "  The browser will open now.\n"
     "\n";
 
 /* ------------------------------------------------------------------------ */
@@ -81,12 +82,44 @@ static void wo1wanExitServices(void)
     appletUnlockExit();
 }
 
+/* ------------------------------------------------------------------------ */
+/* Read handheld and/or first Joy-Con controller buttons.                   */
+/* ------------------------------------------------------------------------ */
+static u64 wo1wanReadButtons(void)
+{
+    HidNpadSystemState npad;
+    u64 buttons = 0;
+
+    hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
+    buttons |= npad.buttons;
+    hidGetNpadStatesSystem(HidNpadIdType_No1,      &npad, 1);
+    buttons |= npad.buttons;
+
+    return buttons;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Wait for a button press, return it.                                      */
+/* ------------------------------------------------------------------------ */
+static u64 wo1wanWaitForButton(u64 mask)
+{
+    u64 buttons;
+
+    while (appletMainLoop())
+    {
+        buttons = wo1wanReadButtons();
+        if (buttons & mask)
+            return buttons;
+        svcSleepThread(10 * 1000000ULL);
+    }
+    return 0;
+}
+
 /* ======================================================================== */
 int main(int argc, char **argv)
 {
     WebCommonConfig config;
     Result          rc;
-    HidNpadSystemState npad;
     u64             buttons;
     bool            running = true;
 
@@ -99,15 +132,15 @@ int main(int argc, char **argv)
     hidInitializeNpad();
     wo1wanInitServices();
 
+    /* Show a brief banner, then release the console before Web Applet. */
     consoleInit(NULL);
     printf("%s", g_banner);
     consoleUpdate(NULL);
+    svcSleepThread(1 * 1000 * 1000000ULL); /* 1 second so user can see it */
+    consoleExit(NULL);
 
     while (running && appletMainLoop())
     {
-        printf("\n>> Opening %s ...\n", SITE_URL);
-        consoleUpdate(NULL);
-
         /*
          * Web Applet launch -- exact same pattern as wiliwili/borealis:
          *
@@ -123,8 +156,11 @@ int main(int argc, char **argv)
         rc = webPageCreate(&config, SITE_URL);
         if (R_FAILED(rc))
         {
-            printf("!! webPageCreate failed (0x%08x)\n", rc);
+            consoleInit(NULL);
+            printf("\n!! webPageCreate failed (0x%08x)\n", rc);
+            printf("Press + to quit.\n");
             consoleUpdate(NULL);
+            wo1wanWaitForButton(HidNpadButton_Plus);
             break;
         }
 
@@ -132,48 +168,42 @@ int main(int argc, char **argv)
 
         /* Blocks until user closes the Web Applet (B button or HOME). */
         rc = webConfigShow(&config, NULL);
-        if (R_FAILED(rc))
-        {
-            printf("!! webConfigShow error (0x%08x)\n", rc);
-            consoleUpdate(NULL);
-            /* Fall through to menu so user can retry or quit. */
-        }
-        else
-        {
-            printf("<< Browser closed.\n");
-        }
 
-        /* Web Applet takes over display; re-init console. */
-        consoleExit(NULL);
+        /* Re-take the console for the post-browser menu. */
         consoleInit(NULL);
 
+        if (R_FAILED(rc))
+        {
+            printf("\n!! webConfigShow error (0x%08x)\n", rc);
+            printf("\n============================================\n");
+            printf("  A = retry\n");
+            printf("  + = quit wo1wan\n");
+            printf("============================================\n");
+            consoleUpdate(NULL);
+
+            buttons = wo1wanWaitForButton(HidNpadButton_A | HidNpadButton_Plus);
+            if (buttons & HidNpadButton_Plus)
+                running = false;
+
+            consoleExit(NULL);
+            continue;
+        }
+
+        printf("\n<< Browser closed.\n");
         printf("\n============================================\n");
         printf("  A = re-open browser\n");
         printf("  + = quit wo1wan\n");
         printf("============================================\n");
         consoleUpdate(NULL);
 
-        /* Wait for A or + */
-        while (appletMainLoop())
-        {
-            buttons = 0;
-            hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
-            buttons |= npad.buttons;
-            hidGetNpadStatesSystem(HidNpadIdType_No1,      &npad, 1);
-            buttons |= npad.buttons;
-
-            if (buttons & HidNpadButton_Plus)
-            { running = false; break; }
-            if (buttons & HidNpadButton_A)
-            { break; }
-
-            svcSleepThread(10 * 1000000ULL);
-        }
+        buttons = wo1wanWaitForButton(HidNpadButton_A | HidNpadButton_Plus);
+        if (buttons & HidNpadButton_Plus)
+            running = false;
 
         consoleExit(NULL);
-        consoleInit(NULL);
     }
 
+    consoleInit(NULL);
     printf("\nGoodbye!\n");
     consoleUpdate(NULL);
     consoleExit(NULL);
