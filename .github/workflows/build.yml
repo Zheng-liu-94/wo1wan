@@ -1,0 +1,25 @@
+name: Build wo1wan.nro
+
+# 推送到 GitHub 后，本工作流会自动用 devkitPro 的 Switch 工具链编译出 wo1wan.nro，
+# 在 Actions 页面的 Artifacts 里即可下载。无需本地安装任何工具链。
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # devkita64 镜像已预装 devkitA64 + libnx + tools，开箱即用
+    container: devkitpro/devkita64:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: make
+
+      - name: Upload wo1wan.nro
+        uses: actions/upload-artifact@v4
+        with:
+          name: wo1wan-nro
+          path: out/wo1wan.nro
