@@ -3,13 +3,13 @@
 === 生成 NACP ===
 NACPTOOL=/opt/devkitpro/tools/bin/nacptool
 nacptool rc=0
-total 2980
-drwxr-xr-x 2 root root    4096 Jul 17 13:09 .
-drwxr-xr-x 7 1001 1001    4096 Jul 17 13:09 ..
--rw-r--r-- 1 root root   28392 Jul 17 13:09 main.o
--rwxr-xr-x 1 root root 3055952 Jul 17 13:09 wo1wan.elf
--rw-r--r-- 1 root root   16384 Jul 17 13:09 wo1wan.nacp
+total 2976
+drwxr-xr-x 2 root root    4096 Jul 17 13:24 .
+drwxr-xr-x 7 1001 1001    4096 Jul 17 13:24 ..
+-rw-r--r-- 1 root root   25472 Jul 17 13:24 main.o
+-rwxr-xr-x 1 root root 3055088 Jul 17 13:24 wo1wan.elf
+-rw-r--r-- 1 root root   16384 Jul 17 13:24 wo1wan.nacp
 === 生成 .nro ===
 === 完成 ===
--rw-r--r-- 1 root root 214K Jul 17 13:09 out/wo1wan.nro
+-rw-r--r-- 1 root root 214K Jul 17 13:24 out/wo1wan.nro
 EXIT_CODE=0
