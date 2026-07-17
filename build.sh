@@ -24,11 +24,20 @@ ${CC} ${LDFLAGS} build/main.o ${LIBS} -o build/wo1wan.elf
 
 echo "=== 生成 NACP ==="
 echo "NACPTOOL=${NACPTOOL}"
-${NACPTOOL} --create --language=en \
-  --title="wo1wan" --author="wiliwili-fork" \
-  --version="1.0.0" build/wo1wan.nacp
+# Portable invocation: positional args (title author version output) work on both
+# old and new nacptool. The --title/--author/--version long-flag form is not honored
+# by every devkitPro build, so we use the positional form and fall back to copying
+# the generated .nacp if it landed somewhere unexpected.
+${NACPTOOL} --create "wo1wan" "wiliwili-fork" "1.0.0" build/wo1wan.nacp 2>&1
+if [ ! -f build/wo1wan.nacp ]; then
+  echo "positional form produced no file; searching for any *.nacp ..."
+  f=$(find . -maxdepth 2 -name '*.nacp' 2>/dev/null | head -1)
+  if [ -n "$f" ]; then
+    echo "found $f -> copying to build/wo1wan.nacp"
+    cp "$f" build/wo1wan.nacp
+  fi
+fi
 echo "nacptool rc=$?"
-echo "--- build/ after nacp ---"
 ls -la build/ 2>&1 || true
 
 echo "=== 生成 .nro ==="
