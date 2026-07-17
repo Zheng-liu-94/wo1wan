@@ -1,7 +1,7 @@
 name: Build wo1wan.nro
 
-# 推送到 GitHub 后，本工作流会自动用 devkitPro 的 Switch 工具链编译出 wo1wan.nro，
-# 在 Actions 页面的 Artifacts 里即可下载。无需本地安装任何工具链。
+# 推送到 GitHub 后自动构建 wo1wan.nro（Switch 自制程序）
+# 构建产物在 Actions → Artifacts 里下载。
 on:
   push:
     branches: [ main, master ]
@@ -10,29 +10,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # devkitpro/devkita64 容器预装了完整的 Switch 工具链：
+    #   devkitA64 (gcc) / libnx / switch-tools (elf2nro, nacptool)
+    # 不需要额外安装任何东西，直接 make 即可出包。
+    container: devkitpro/devkita64
     steps:
       - uses: actions/checkout@v4
 
-      # 安装 devkitPro 官方 apt 仓库与工具链（来自官方安装脚本，确定性、无交互）
-      - name: Install devkitPro toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y apt-transport-https wget ca-certificates
-          sudo mkdir -p /usr/share/keyring
-          sudo wget -U "dkp apt" -O /usr/share/keyring/devkitpro-pub.gpg https://apt.devkitpro.org/devkitpro-pub.gpg
-          echo "deb [signed-by=/usr/share/keyring/devkitpro-pub.gpg] https://apt.devkitpro.org stable main" | sudo tee /etc/apt/sources.list.d/devkitpro.list
-          sudo apt-get update
-          sudo apt-get install -y devkitpro-pacman
-          echo "/opt/devkitpro/pacman/bin" >> "$GITHUB_PATH"
-
-      # 安装 Switch 组件（devkitA64 + libnx + switch-tools，提供 gcc / elf2nro / nacptool）
-      - name: Install Switch dev packages
-        run: dkp-pacman -Syu --noconfirm switch-dev
-
-      - name: Build
+      - name: Build wo1wan.nro
         run: make
 
-      - name: Upload wo1wan.nro
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: wo1wan-nro
