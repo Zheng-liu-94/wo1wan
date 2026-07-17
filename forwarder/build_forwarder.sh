@@ -40,7 +40,7 @@ echo "== compiling forwarder =="
     -c source/trampoline.s -o build/trampoline.o
 
 "$CC" build/main.o build/trampoline.o \
-    -specs="$LIBNX/switch.specs" -L"$LIBNX/lib" -lnx \
+    -specs="$LIBNX/switch.specs" -pie -g -L"$LIBNX/lib" -lnx \
     -o build/wo1wan-forwarder.elf
 
 # ---------------------------------------------------------------------------
