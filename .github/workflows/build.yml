@@ -19,14 +19,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc
 
-      - name: Safe directory (container requirement)
+      - name: Safe directory
         run: |
           git config --global --add safe.directory /__w/wo1wan/wo1wan
 
-      - name: Build wo1wan.nro
-        run: bash build.sh
+      - name: Build wo1wan.nro (with full log capture)
+        run: |
+          set +e
+          bash build.sh > build_log.txt 2>&1
+          echo "EXIT_CODE=$?" >> build_log.txt
+          cat build_log.txt
+          exit $(tail -1 build_log.txt | cut -d= -f2)
 
-      - name: Upload artifact
+      - name: Upload build log (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build_log.txt
+
+      - name: Upload wo1wan.nro
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: wo1wan-nro
