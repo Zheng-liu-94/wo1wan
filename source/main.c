@@ -93,7 +93,6 @@ int main(int argc, char **argv)
         /* 等待用户选择：A 重新进入，+ 退出 */
         while (1)
         {
-            hidScanInput();
             memset(&npad, 0, sizeof(npad));
             buttons = 0;
             hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
@@ -116,7 +115,6 @@ int main(int argc, char **argv)
     consoleUpdate(NULL);
     while (appletMainLoop())
     {
-        hidScanInput();
         memset(&npad, 0, sizeof(npad));
         buttons = 0;
         hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
