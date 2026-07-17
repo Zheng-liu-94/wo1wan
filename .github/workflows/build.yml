@@ -13,11 +13,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 用官方 devkitpro/pacman Action 安装 Switch 工具链（社区标准 CI 模式）
-      - uses: devkitpro/pacman@main
-        with:
-          install: |
-            switch-dev
+      # 安装 devkitPro 官方 apt 仓库与工具链（来自官方安装脚本，确定性、无交互）
+      - name: Install devkitPro toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https wget ca-certificates
+          sudo mkdir -p /usr/share/keyring
+          sudo wget -U "dkp apt" -O /usr/share/keyring/devkitpro-pub.gpg https://apt.devkitpro.org/devkitpro-pub.gpg
+          echo "deb [signed-by=/usr/share/keyring/devkitpro-pub.gpg] https://apt.devkitpro.org stable main" | sudo tee /etc/apt/sources.list.d/devkitpro.list
+          sudo apt-get update
+          sudo apt-get install -y devkitpro-pacman
+          echo "/opt/devkitpro/pacman/bin" >> "$GITHUB_PATH"
+
+      # 安装 Switch 组件（devkitA64 + libnx + switch-tools，提供 gcc / elf2nro / nacptool）
+      - name: Install Switch dev packages
+        run: dkp-pacman -Syu --noconfirm switch-dev
 
       - name: Build
         run: make
