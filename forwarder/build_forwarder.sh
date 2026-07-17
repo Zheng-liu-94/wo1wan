@@ -39,9 +39,20 @@ echo "== compiling forwarder =="
     -I"$LIBNX/include" -D__SWITCH__ \
     -c source/trampoline.s -o build/trampoline.o
 
+# IMPORTANT (GCC 15 / new binutils): the default is now `-z text`, which makes
+# ld reject dynamic relocations living in a read-only segment with:
+#   "read-only segment has dynamic relocations"
+# The forwarder (hbloader + trampoline) legitimately has such relocations, and
+# the Horizon NSO loader applies them at load time. The proven fix (see the
+# kvm-unit-tests arm64 patch) is `-pie` + `-Wl,-z,notext`. switch.specs already
+# contributes `-pie`; we add `-z notext` to relax the read-only check.
 "$CC" build/main.o build/trampoline.o \
     -specs="$LIBNX/switch.specs" -g -L"$LIBNX/lib" -lnx \
-    -o build/wo1wan-forwarder.elf -pie
+    -o build/wo1wan-forwarder.elf -pie -Wl,-z,notext
+
+echo "== verify ELF type =="
+"$DEVKITPRO/devkitA64/bin/aarch64-none-elf-readelf" -h build/wo1wan-forwarder.elf \
+    | grep -E "Type:|Machine:" || true
 
 # ---------------------------------------------------------------------------
 # 2. NSO + NPDM + NACP
@@ -59,4 +70,6 @@ echo "== building wo1wan.nsp (PFS0) =="
 python3 make_nsp.py wo1wan.nsp
 
 ls -lh wo1wan.nsp
+echo "== verify PFS0 magic =="
+head -c 4 wo1wan.nsp | od -c | head -1 || true
 echo "FORWARDER_BUILD_OK"
