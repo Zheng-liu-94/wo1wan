@@ -1,36 +1,39 @@
 /*
- * wo1wan —— 模仿 wiliwili 的 Switch 自制程序
- * 把「畅玩空间」网页版游戏大厅 (https://play.wo1wan.com) 变成 Switch 上的应用，
- * 通过 Switch 内置的网页小程序(Web Applet) 直接在线玩游戏。
+ * wo1wan - a Switch homebrew that mimics wiliwili
  *
- * 技术说明：
- *   - 用 libnx 的 Web Applet 接口（webPageCreate / webConfigShow）在 Switch 上
- *     打开一个真正的浏览器内核，渲染目标网站，因此 HTML5 / Canvas / WebGL 小游戏
- *     都能直接运行。
- *   - 左摇杆 = 鼠标指针，触摸屏 = 直接触摸，方便操作网页游戏。
- *   - 想打开别的网站？改下面 GAME_URL 即可。
+ * Turns the "Chang Wan Kong Jian" web game lobby (https://play.wo1wan.com)
+ * into a Switch app by opening it inside the Switch Web Applet (a real
+ * browser kernel), so HTML5 / Canvas / WebGL mini-games run directly.
  *
- * 构建：在装有 devkitPro 的环境里执行 `bash build.sh`，产物为 out/wo1wan.nro
+ * Controls:
+ *   - Left Stick = mouse pointer, Touch screen = tap
+ *   - Press A to re-open the lobby, Press + to quit
+ *
+ * To open a different site, change GAME_URL below and rebuild.
+ *
+ * Build: run `bash build.sh` in a devkitPro environment.
+ *        Output: out/wo1wan.nro
+ *
+ * NOTE: all on-screen text is English on purpose - the Switch console font
+ * has no CJK glyphs, so Chinese would render as garbage boxes.
  */
 
 #include <switch.h>
 #include <stdio.h>
 #include <string.h>
 
-/* 默认打开的网址：畅玩空间「在线玩」PC 版。可改成任意网页。 */
+/* Default site: the "play online" PC version of the lobby. Change freely. */
 #define GAME_URL "https://play.wo1wan.com/nextgame/pc/#/"
-
-/* 如果想用更偏触摸/竖屏的版本，把上面改成例如 "https://play.wo1wan.com/" 再试。 */
 
 static const char *g_banner =
     "\n"
     "  ============================================\n"
-    "        畅玩空间  wo1wan  ·  Switch 在线玩\n"
+    "           wo1wan  -  Play web games on Switch\n"
     "  ============================================\n"
     "\n"
-    "  正在打开网页游戏大厅……\n"
-    "  左摇杆 = 鼠标指针      触摸屏 = 直接触摸\n"
-    "  按  A  重新进入大厅     按  +  退出程序\n"
+    "  Launching the web game lobby...\n"
+    "  Left Stick = mouse    Touch screen = tap\n"
+    "  Press  A  to re-open   Press  +  to quit\n"
     "\n";
 
 int main(int argc, char **argv)
@@ -40,57 +43,60 @@ int main(int argc, char **argv)
     Result             rc;
     HidNpadSystemState npad;
     u64                buttons;
+    bool               running = true;
 
+    /* Required service initialization. Without appletInitialize() the Web
+       Applet launch (and appletMainLoop) crashes on a real Switch. */
+    appletInitialize();
+    hidInitialize();
+    hidInitializeNpad();
     consoleInit(NULL);
+
     printf("%s", g_banner);
     consoleUpdate(NULL);
 
-    hidInitialize();
-    hidInitializeNpad();
-
-    while (1)
+    while (running)
     {
-        printf("\n>> 正在启动游戏大厅……\n");
+        printf("\n>> Launching game lobby...\n");
         consoleUpdate(NULL);
 
-        /* 创建 Web Applet 配置，指向目标网址 */
         rc = webPageCreate(&config, GAME_URL);
         if (R_FAILED(rc))
         {
-            printf("!! 无法创建网页配置 (0x%08x)\n", rc);
+            printf("!! Failed to create web config (0x%08x)\n", rc);
             consoleUpdate(NULL);
             break;
         }
 
-        /* 让左摇杆直接当作鼠标指针移动，方便操作网页游戏 */
+        /* Left stick acts as the mouse pointer for web games. */
         webConfigSetPointer(&config, true);
         webConfigSetLeftStickMode(&config, WebLeftStickMode_Pointer);
-        /* 触摸屏幕的输入直接传递给网页（适合触屏小游戏） */
+        /* Forward touch input to the page (good for touch games). */
         webConfigSetTouchEnabledOnContents(&config, true);
-        /* 开启网页音频（游戏音效 / 音乐） */
+        /* Enable web audio (game sound / music). */
         webConfigSetWebAudio(&config, true);
 
-        /* 启动浏览器小程序，这里会一直阻塞到用户关闭网页 */
+        /* Blocks until the user closes the web applet. */
         rc = webConfigShow(&config, &reply);
         if (R_FAILED(rc))
         {
-            printf("!! 网页启动失败 (0x%08x)\n", rc);
+            printf("!! Failed to launch web (0x%08x)\n", rc);
             consoleUpdate(NULL);
             break;
         }
 
-        /* 用户从网页返回后，重置控制台并显示菜单 */
+        /* Web applet returned; the display was taken over, so re-init console. */
         consoleExit(NULL);
         consoleInit(NULL);
 
         printf("\n============================================\n");
-        printf("  已退出游戏大厅。\n");
-        printf("  按  A ：重新进入游戏大厅\n");
-        printf("  按  + ：退出 wo1wan\n");
+        printf("  Left the game lobby.\n");
+        printf("  Press  A : re-open lobby\n");
+        printf("  Press  + : quit wo1wan\n");
         printf("============================================\n");
         consoleUpdate(NULL);
 
-        /* 等待用户选择：A 重新进入，+ 退出 */
+        /* Wait for A (relaunch) or + (quit). */
         while (1)
         {
             memset(&npad, 0, sizeof(npad));
@@ -101,19 +107,20 @@ int main(int argc, char **argv)
             buttons |= npad.buttons;
 
             if (buttons & HidNpadButton_A)
-                break;                 /* 重新进入大厅 */
+                break;                 /* relaunch lobby */
             if (buttons & HidNpadButton_Plus)
             {
-                consoleExit(NULL);
-                return 0;              /* 退出程序 */
+                running = false;
+                break;                 /* quit */
             }
-            svcSleepThread(10000000);  /* 睡眠 10ms，避免空转 */
+            svcSleepThread(10000000);  /* ~10ms, avoid busy loop */
         }
     }
 
-    printf("\n按  +  退出……\n");
+    /* Fallback: if web launch failed above, just wait for + to quit. */
+    printf("\nPress  +  to quit...\n");
     consoleUpdate(NULL);
-    while (appletMainLoop())
+    while (running && appletMainLoop())
     {
         memset(&npad, 0, sizeof(npad));
         buttons = 0;
@@ -127,5 +134,7 @@ int main(int argc, char **argv)
     }
 
     consoleExit(NULL);
+    hidExit();
+    appletExit();
     return 0;
 }
