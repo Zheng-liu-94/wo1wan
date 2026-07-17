@@ -2,14 +2,11 @@
  * wo1wan - Play web games on Nintendo Switch
  *
  * Opens https://play.wo1wan.com in the Switch Web Applet (real browser kernel).
- * The website itself handles login (WeChat/QQ QR) and game navigation.
+ * The website handles login (WeChat/QQ QR) and game navigation.
  *
- * Controls inside browser:
- *   Left Stick = mouse pointer
- *   Touch screen = tap/click
- *
- * Outside browser (on console):
- *   A = re-open browser    + = quit app
+ * Web Applet usage follows wiliwili's proven pattern:
+ *   webPageCreate → webConfigSetWhitelist → webConfigShow(NULL)
+ *   NO memset on WebCommonConfig — libnx manages internal state itself.
  *
  * Build: bash build.sh   Output: out/wo1wan.nro
  */
@@ -26,20 +23,16 @@ static const char *g_banner =
     "      wo1wan  -  Play web games on Switch\n"
     "  =============================================\n"
     "\n"
-    "  Opening https://play.wo1wan.com ...\n"
-    "  Scan QR code with phone to log in.\n"
+    "  Opening browser, please wait...\n"
     "\n"
-    "  Inside browser:\n"
-    "    Left Stick = mouse    Touch = tap\n"
-    "  Outside browser:\n"
-    "    A = re-open          + = quit\n"
+    "  Controls:\n"
+    "    A = re-open     + = quit\n"
     "\n";
 
 /* ======================================================================== */
 int main(int argc, char **argv)
 {
     WebCommonConfig config;
-    WebCommonReply  reply;
     Result          rc;
     HidNpadSystemState npad;
     u64             buttons;
@@ -48,30 +41,32 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    /* ---- Initialise required services ---- */
-    rc = appletInitialize();
-    if (R_FAILED(rc)) { /* cannot even print without console */ return 1; }
-
-    rc = hidInitialize();
-    if (R_FAILED(rc)) { appletExit(); return 1; }
+    /* Initialise services */
+    appletInitialize();
+    hidInitialize();
     hidInitializeNpad();
 
     consoleInit(NULL);
     printf("%s", g_banner);
     consoleUpdate(NULL);
 
-    /* ---- Main loop: open browser → wait for close → ask user ---- */
     while (running && appletMainLoop())
     {
-        /* --- Launch Web Applet --- */
-        printf("\n>> Launching browser...\n");
+        printf("\n>> Opening %s ...\n", SITE_URL);
         consoleUpdate(NULL);
 
-        /* Zero-init the config struct — libnx does NOT do this for us,
-           and stale stack memory can cause fatal svc errors (0x1003). */
-        memset(&config, 0, sizeof(config));
-        memset(&reply, 0, sizeof(reply));
-
+        /*
+         * Web Applet launch — exact same pattern as wiliwili/borealis:
+         *
+         * 1. Declare config on stack, do NOT memset/zero it.
+         *    libnx's webPageCreate fills in internal fields; pre-zeroing
+         *    corrupts those fields and causes kernel panic (0x1003).
+         *
+         * 2. Only set whitelist (same as wiliwili). No pointer/stick/audio
+         *    extras — keep it minimal to avoid triggering Atmosphere bugs.
+         *
+         * 3. Pass NULL for reply (same as wiliwili).
+         */
         rc = webPageCreate(&config, SITE_URL);
         if (R_FAILED(rc))
         {
@@ -80,40 +75,35 @@ int main(int argc, char **argv)
             break;
         }
 
-        webConfigSetPointer(&config, true);
-        webConfigSetLeftStickMode(&config, WebLeftStickMode_Pointer);
-        webConfigSetTouchEnabledOnContents(&config, true);
-        webConfigSetWebAudio(&config, true);
+        webConfigSetWhitelist(&config, "^http*");
 
-        /* Blocks until user closes the Web Applet (presses B or HOME). */
-        rc = webConfigShow(&config, &reply);
+        /* Blocks until user closes the Web Applet (B button or HOME). */
+        rc = webConfigShow(&config, NULL);
         if (R_FAILED(rc))
         {
             printf("!! webConfigShow error (0x%08x)\n", rc);
             consoleUpdate(NULL);
-            /* Don't crash — fall through to menu so user can retry or quit. */
+            /* Fall through to menu so user can retry or quit. */
         }
         else
         {
-            printf("<< Browser closed normally.\n");
+            printf("<< Browser closed.\n");
         }
 
-        /* Web Applet takes over the display; re-init console. */
+        /* Web Applet takes over display; re-init console. */
         consoleExit(NULL);
         consoleInit(NULL);
 
         printf("\n============================================\n");
-        printf("  Press A : re-open browser\n");
-        printf("  Press + : quit wo1wan\n");
+        printf("  A = re-open browser\n");
+        printf("  + = quit wo1wan\n");
         printf("============================================\n");
         consoleUpdate(NULL);
 
-        /* ---- Wait for button ---- */
+        /* Wait for A or + */
         while (appletMainLoop())
         {
-            memset(&npad, 0, sizeof(npad));
             buttons = 0;
-
             hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
             buttons |= npad.buttons;
             hidGetNpadStatesSystem(HidNpadIdType_No1,      &npad, 1);
@@ -122,18 +112,16 @@ int main(int argc, char **argv)
             if (buttons & HidNpadButton_Plus)
             { running = false; break; }
             if (buttons & HidNpadButton_A)
-            { break; }               /* relaunch */
+            { break; }
 
-            svcSleepThread(10 * 1000000ULL); /* 10 ms */
+            svcSleepThread(10 * 1000000ULL);
         }
 
-        /* Re-init console before next loop (web applet dirties state). */
         consoleExit(NULL);
         consoleInit(NULL);
     }
 
-    /* ---- Clean shutdown (single exit path) ---- */
-    printf("\nShutting down. Goodbye!\n");
+    printf("\nGoodbye!\n");
     consoleUpdate(NULL);
     consoleExit(NULL);
     hidExit();
