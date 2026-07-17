@@ -23,9 +23,13 @@ echo "=== 链接 ==="
 ${CC} ${LDFLAGS} build/main.o ${LIBS} -o build/wo1wan.elf
 
 echo "=== 生成 NACP ==="
+echo "NACPTOOL=${NACPTOOL}"
 ${NACPTOOL} --create --language=en \
   --title="wo1wan" --author="wiliwili-fork" \
   --version="1.0.0" build/wo1wan.nacp
+echo "nacptool rc=$?"
+echo "--- build/ after nacp ---"
+ls -la build/ 2>&1 || true
 
 echo "=== 生成 .nro ==="
 ${ELF2NRO} build/wo1wan.elf out/wo1wan.nro \
