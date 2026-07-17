@@ -1,0 +1,2 @@
+# 强制使用 LF 换行，避免 Windows CRLF 破坏 Makefile / shell 配方导致 CI 构建失败
+* text=auto eol=lf
