@@ -1,7 +1,5 @@
 name: Build wo1wan.nro
 
-# 推送到 GitHub 后自动构建 wo1wan.nro（Switch 自制程序）
-# 构建产物在 Actions → Artifacts 里下载。
 on:
   push:
     branches: [ main, master ]
@@ -10,15 +8,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # devkitpro/devkita64 容器预装了完整的 Switch 工具链：
-    #   devkitA64 (gcc) / libnx / switch-tools (elf2nro, nacptool)
-    # 不需要额外安装任何东西，直接 make 即可出包。
     container: devkitpro/devkita64
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc
+
+      - name: Safe directory (container requirement)
+        run: |
+          git config --global --add safe.directory /__w/wo1wan/wo1wan
 
       - name: Build wo1wan.nro
-        run: make
+        run: bash build.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
