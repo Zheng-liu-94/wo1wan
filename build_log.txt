@@ -1,0 +1,6 @@
+=== 编译 main.c ===
+=== 链接 ===
+=== 生成 NACP ===
+=== 生成 .nro ===
+Failed to open input nacp!
+EXIT_CODE=1
