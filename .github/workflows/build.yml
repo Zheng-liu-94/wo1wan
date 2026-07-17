@@ -1,11 +1,11 @@
-name: Build wo1wan.nro
+name: Build wo1wan
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
 
-# Allow the workflow to push the debug log to a branch
+# Allow the workflow to push the debug log to a branch and publish releases
 permissions:
   contents: write
 
@@ -21,19 +21,25 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc
+          sudo apt-get install -y gcc python3
 
       - name: Safe directory
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Build wo1wan.nro (with full log capture)
+      - name: Build wo1wan.nro (homebrew payload)
         run: |
           set +e
           bash build.sh > build_log.txt 2>&1
-          echo "EXIT_CODE=$?" >> build_log.txt
-          cat build_log.txt
-          exit $(tail -1 build_log.txt | cut -d= -f2)
+          echo "NRO_EXIT=$?" >> build_log.txt
+          tail -8 build_log.txt
+
+      - name: Build wo1wan.nsp (Application forwarder)
+        run: |
+          set +e
+          bash forwarder/build_forwarder.sh >> build_log.txt 2>&1
+          echo "NSP_EXIT=$?" >> build_log.txt
+          tail -8 build_log.txt
 
       - name: Upload build log (always)
         if: always()
@@ -64,21 +70,13 @@ jobs:
               content: data, sha: sha
             });
 
-      - name: Upload wo1wan.nro
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wo1wan-nro
-          path: out/wo1wan.nro
-
-      - name: Publish .nro to GitHub Release (public download)
+      - name: Publish .nro and .nsp to GitHub Release (public download)
         if: success()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const tag = 'latest';
-            const releaseName = 'wo1wan latest';
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
@@ -96,23 +94,31 @@ jobs:
               releaseId = r.data.id;
             } catch (e) {
               const r = await github.rest.repos.createRelease({
-                owner, repo, tag_name: tag, name: releaseName,
-                body: 'Latest CI build of wo1wan.nro', prerelease: true
+                owner, repo, tag_name: tag, name: 'wo1wan latest',
+                body: 'Latest CI build.\n\n- wo1wan.nro : homebrew payload (put on SD -> switch/wo1wan.nro)\n- wo1wan.nsp : Application forwarder (install to home menu; launches the .nro as SystemApplication so the Web Applet works)',
+                prerelease: true
               });
               releaseId = r.data.id;
             }
 
-            // Delete old asset
-            const assetName = 'wo1wan.nro';
-            try {
-              const r = await github.rest.repos.getRelease({ owner, repo, release_id: releaseId });
-              const old = r.data.assets.find(a => a.name === assetName);
-              if (old) await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: old.id });
-            } catch (e) {}
+            const assets = [
+              { name: 'wo1wan.nro', path: 'out/wo1wan.nro' },
+              { name: 'wo1wan.nsp', path: 'forwarder/wo1wan.nsp' },
+            ];
 
-            // Upload new asset
-            const data = fs.readFileSync('out/wo1wan.nro');
-            await github.rest.repos.uploadReleaseAsset({
-              owner, repo, release_id: releaseId, name: assetName, data: data,
-              headers: { 'content-type': 'application/octet-stream', 'content-length': data.length }
-            });
+            // Delete stale assets
+            const r = await github.rest.repos.getRelease({ owner, repo, release_id: releaseId });
+            for (const a of assets) {
+              const old = r.data.assets.find(x => x.name === a.name);
+              if (old) await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: old.id });
+            }
+
+            // Upload fresh assets
+            for (const a of assets) {
+              const data = fs.readFileSync(a.path);
+              await github.rest.repos.uploadReleaseAsset({
+                owner, repo, release_id: releaseId, name: a.name, data: data,
+                headers: { 'content-type': 'application/octet-stream', 'content-length': data.length }
+              });
+            }
+            console.log('Released wo1wan.nro and wo1wan.nsp');
