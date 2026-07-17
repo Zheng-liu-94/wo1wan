@@ -10,10 +10,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # devkita64 镜像已预装 devkitA64 + libnx + tools，开箱即用
-    container: devkitpro/devkita64:latest
     steps:
       - uses: actions/checkout@v4
+
+      # 用官方 devkitpro/pacman Action 安装 Switch 工具链（社区标准 CI 模式）
+      - uses: devkitpro/pacman@main
+        with:
+          install: |
+            switch-dev
 
       - name: Build
         run: make
