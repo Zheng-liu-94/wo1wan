@@ -14,6 +14,8 @@
  */
 
 #include <switch.h>
+#include <switch/hid.h>
+#include <switch/keycodes.h>
 #include <stdio.h>
 #include <string.h>
 
