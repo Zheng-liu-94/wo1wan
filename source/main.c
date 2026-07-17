@@ -1,198 +1,140 @@
 /*
- * wo1wan - a Switch homebrew that mimics wiliwili
+ * wo1wan - Play web games on Nintendo Switch
  *
- * Turns "Chang Wan Kong Jian" (https://play.wo1wan.com) into a Switch app.
- * Uses the Switch Web Applet (real browser kernel) so HTML5/Canvas/WebGL games
- * run directly on the console.
+ * Opens https://play.wo1wan.com in the Switch Web Applet (real browser kernel).
+ * The website itself handles login (WeChat/QQ QR) and game navigation.
  *
- * Login flow (mimics wiliwili's QR pattern):
- *   Step 1 - Open wo1wan HOME page  -> WeChat/QQ QR code appears -> user scans
- *   Step 2 - After login, press A    -> Open GAME LOBBY to play
- *   Press + at any time to quit.
- *
- * Controls inside Web Applet:
+ * Controls inside browser:
  *   Left Stick = mouse pointer
  *   Touch screen = tap/click
- *   B button     = back
+ *
+ * Outside browser (on console):
+ *   A = re-open browser    + = quit app
  *
  * Build: bash build.sh   Output: out/wo1wan.nro
- *
- * NOTE: All on-screen text is English because the Switch console font has no
- * CJK glyphs -- Chinese would render as garbage boxes.
  */
 
 #include <switch.h>
 #include <stdio.h>
 #include <string.h>
 
-/* ---- URLs --------------------------------------------------------------- */
-/* Home / login page -- shows WeChat or QQ QR code for scanning. */
-#define HOME_URL  "https://play.wo1wan.com"
-/* Game lobby deep link -- shown after successful login. */
-#define GAME_URL  "https://play.wo1wan.com/nextgame/pc/#/"
+#define SITE_URL "https://play.wo1wan.com"
 
-/* ---- UI text (English only – CJK = mojibake on Switch console) ---------- */
 static const char *g_banner =
     "\n\n"
-    "  ==============================================\n"
+    "  =============================================\n"
     "      wo1wan  -  Play web games on Switch\n"
-    "  ==============================================\n"
+    "  =============================================\n"
     "\n"
-    "  STEP 1: Scan QR code to log in (WeChat / QQ)\n"
-    "  STEP 2: After login, press A to enter game lobby\n"
+    "  Opening https://play.wo1wan.com ...\n"
+    "  Scan QR code with phone to log in.\n"
     "\n"
     "  Inside browser:\n"
     "    Left Stick = mouse    Touch = tap\n"
-    "    B = back              +  = quit app\n"
+    "  Outside browser:\n"
+    "    A = re-open          + = quit\n"
     "\n";
-
-static const char *g_post_login =
-    "\n  =============================================\n"
-    "  Returned from browser.\n"
-    "  A = re-open    + = quit wo1wan\n"
-    "  =============================================\n";
-
-/* ------------------------------------------------------------------------ */
-/* Launch the Web Applet with the given URL and standard settings.
-   Returns true if the user exited normally, false on error. */
-static bool launch_web(const char *url, const char *label)
-{
-    WebCommonConfig config;
-    WebCommonReply  reply;
-    Result          rc;
-
-    printf(">> Opening %s ...\n", label);
-    printf("   URL: %s\n", url);
-    consoleUpdate(NULL);
-
-    rc = webPageCreate(&config, url);
-    if (R_FAILED(rc))
-    {
-        printf("!! webPageCreate failed (0x%08x)\n", rc);
-        consoleUpdate(NULL);
-        return false;
-    }
-
-    /* Configure for game-friendly browsing. */
-    webConfigSetPointer(&config, true);
-    webConfigSetLeftStickMode(&config, WebLeftStickMode_Pointer);
-    webConfigSetTouchEnabledOnContents(&config, true);
-    webConfigSetWebAudio(&config, true);
-
-    /* Block here until the user closes the Web Applet. */
-    rc = webConfigShow(&config, &reply);
-    if (R_FAILED(rc))
-    {
-        printf("!! webConfigShow failed (0x%08x)\n", rc);
-        consoleUpdate(NULL);
-        return false;
-    }
-
-    printf("<< Browser closed.\n");
-    return true;
-}
-
-/* ------------------------------------------------------------------------ */
-/* Wait for A (continue) or + (quit). Returns true if user wants to continue.
-   Also returns false if the system requests exit (appletMainLoop). */
-static bool wait_for_a_or_plus(void)
-{
-    HidNpadSystemState npad_handheld;
-    HidNpadSystemState npad_1;
-    u64                buttons;
-
-    while (appletMainLoop())
-    {
-        memset(&npad_handheld, 0, sizeof(npad_handheld));
-        memset(&npad_1,       0, sizeof(npad_1));
-        buttons = 0;
-
-        hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad_handheld, 1);
-        buttons |= npad_handheld.buttons;
-        hidGetNpadStatesSystem(HidNpadIdType_No1,      &npad_1,       1);
-        buttons |= npad_1.buttons;
-
-        if (buttons & HidNpadButton_Plus)
-            return false;               /* user wants to quit */
-        if (buttons & HidNpadButton_A)
-            return true;                /* user wants to continue */
-
-        svcSleepThread(10 * 1000000ULL); /* 10 ms */
-    }
-
-    /* System requested exit (e.g., home button → close). */
-    return false;
-}
 
 /* ======================================================================== */
 int main(int argc, char **argv)
 {
-    bool  logged_in = false;
-    bool  running   = true;
+    WebCommonConfig config;
+    WebCommonReply  reply;
+    Result          rc;
+    HidNpadSystemState npad;
+    u64             buttons;
+    bool            running = true;
 
     (void)argc;
     (void)argv;
 
-    /* ---- Initialise services ------------------------------------------- */
-    appletInitialize();
-    hidInitialize();
-    hidInitializeNpad();
-    consoleInit(NULL);
+    /* ---- Initialise required services ---- */
+    rc = appletInitialize();
+    if (R_FAILED(rc)) { /* cannot even print without console */ return 1; }
 
+    rc = hidInitialize();
+    if (R_FAILED(rc)) { appletExit(); return 1; }
+    hidInitializeNpad();
+
+    consoleInit(NULL);
     printf("%s", g_banner);
     consoleUpdate(NULL);
 
-    /* ---- Main loop ---------------------------------------------------- */
+    /* ---- Main loop: open browser → wait for close → ask user ---- */
     while (running && appletMainLoop())
     {
-        /* Phase 1: Login page (shows QR code for WeChat / QQ scan). */
-        if (!logged_in)
-        {
-            printf("\n-- PHASE 1: Login (scan QR with phone) -----------\n");
-            consoleUpdate(NULL);
-
-            if (!launch_web(HOME_URL, "Login / Home page"))
-            {
-                printf("!! Could not open login page.\n");
-                break;
-            }
-
-            /* User returned from browser -- assume they logged in. */
-            logged_in = true;
-            printf("\n-- Login phase done. Press A for game lobby. --\n");
-            consoleUpdate(NULL);
-        }
-
-        /* Phase 2: Game lobby (the actual games). */
-        if (logged_in)
-        {
-            printf("\n-- PHASE 2: Game Lobby --------------------------\n");
-            consoleUpdate(NULL);
-
-            if (!launch_web(GAME_URL, "Game Lobby"))
-            {
-                printf("!! Could not open game lobby.\n");
-                /* Don't crash -- let user retry or quit. */
-            }
-        }
-
-        /* Returned from browser. Show menu. */
-        consoleExit(NULL);
-        consoleInit(NULL);
-        printf("%s", g_post_login);
+        /* --- Launch Web Applet --- */
+        printf("\n>> Launching browser...\n");
         consoleUpdate(NULL);
 
-        running = wait_for_a_or_plus();
+        /* Zero-init the config struct — libnx does NOT do this for us,
+           and stale stack memory can cause fatal svc errors (0x1003). */
+        memset(&config, 0, sizeof(config));
+        memset(&reply, 0, sizeof(reply));
 
-        /* Re-init console for next iteration (web applet takes over display). */
+        rc = webPageCreate(&config, SITE_URL);
+        if (R_FAILED(rc))
+        {
+            printf("!! webPageCreate failed (0x%08x)\n", rc);
+            consoleUpdate(NULL);
+            break;
+        }
+
+        webConfigSetPointer(&config, true);
+        webConfigSetLeftStickMode(&config, WebLeftStickMode_Pointer);
+        webConfigSetTouchEnabledOnContents(&config, true);
+        webConfigSetWebAudio(&config, true);
+
+        /* Blocks until user closes the Web Applet (presses B or HOME). */
+        rc = webConfigShow(&config, &reply);
+        if (R_FAILED(rc))
+        {
+            printf("!! webConfigShow error (0x%08x)\n", rc);
+            consoleUpdate(NULL);
+            /* Don't crash — fall through to menu so user can retry or quit. */
+        }
+        else
+        {
+            printf("<< Browser closed normally.\n");
+        }
+
+        /* Web Applet takes over the display; re-init console. */
+        consoleExit(NULL);
+        consoleInit(NULL);
+
+        printf("\n============================================\n");
+        printf("  Press A : re-open browser\n");
+        printf("  Press + : quit wo1wan\n");
+        printf("============================================\n");
+        consoleUpdate(NULL);
+
+        /* ---- Wait for button ---- */
+        while (appletMainLoop())
+        {
+            memset(&npad, 0, sizeof(npad));
+            buttons = 0;
+
+            hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
+            buttons |= npad.buttons;
+            hidGetNpadStatesSystem(HidNpadIdType_No1,      &npad, 1);
+            buttons |= npad.buttons;
+
+            if (buttons & HidNpadButton_Plus)
+            { running = false; break; }
+            if (buttons & HidNpadButton_A)
+            { break; }               /* relaunch */
+
+            svcSleepThread(10 * 1000000ULL); /* 10 ms */
+        }
+
+        /* Re-init console before next loop (web applet dirties state). */
         consoleExit(NULL);
         consoleInit(NULL);
     }
 
-    /* ---- Clean shutdown ----------------------------------------------- */
-    printf("\nShutting down wo1wan. Goodbye!\n");
+    /* ---- Clean shutdown (single exit path) ---- */
+    printf("\nShutting down. Goodbye!\n");
     consoleUpdate(NULL);
-
     consoleExit(NULL);
     hidExit();
     appletExit();
