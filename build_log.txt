@@ -4,14 +4,14 @@
 NACPTOOL=/opt/devkitpro/tools/bin/nacptool
 nacptool rc=0
 total 3740
-drwxr-xr-x 2 root root    4096 Jul 17 14:55 .
-drwxr-xr-x 8 1001 1001    4096 Jul 17 14:55 ..
--rw-r--r-- 1 root root   31184 Jul 17 14:55 main.o
--rwxr-xr-x 1 root root 3833016 Jul 17 14:55 wo1wan.elf
--rw-r--r-- 1 root root   16384 Jul 17 14:55 wo1wan.nacp
+drwxr-xr-x 2 root root    4096 Jul 17 14:56 .
+drwxr-xr-x 8 1001 1001    4096 Jul 17 14:56 ..
+-rw-r--r-- 1 root root   31184 Jul 17 14:56 main.o
+-rwxr-xr-x 1 root root 3833016 Jul 17 14:56 wo1wan.elf
+-rw-r--r-- 1 root root   16384 Jul 17 14:56 wo1wan.nacp
 === 生成 .nro ===
 === 完成 ===
--rw-r--r-- 1 root root 234K Jul 17 14:55 out/wo1wan.nro
+-rw-r--r-- 1 root root 234K Jul 17 14:56 out/wo1wan.nro
 NRO_EXIT=0
 == tool paths ==
 CC       = /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc
