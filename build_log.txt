@@ -3,15 +3,15 @@
 === 生成 NACP ===
 NACPTOOL=/opt/devkitpro/tools/bin/nacptool
 nacptool rc=0
-total 3740
-drwxr-xr-x 2 root root    4096 Jul 17 15:00 .
-drwxr-xr-x 8 1001 1001    4096 Jul 17 15:00 ..
--rw-r--r-- 1 root root   31184 Jul 17 15:00 main.o
--rwxr-xr-x 1 root root 3833016 Jul 17 15:00 wo1wan.elf
--rw-r--r-- 1 root root   16384 Jul 17 15:00 wo1wan.nacp
+total 3708
+drwxr-xr-x 2 root root    4096 Jul 17 15:04 .
+drwxr-xr-x 8 1001 1001    4096 Jul 17 15:04 ..
+-rw-r--r-- 1 root root   31200 Jul 17 15:04 main.o
+-rwxr-xr-x 1 root root 3797080 Jul 17 15:04 wo1wan.elf
+-rw-r--r-- 1 root root   16384 Jul 17 15:04 wo1wan.nacp
 === 生成 .nro ===
 === 完成 ===
--rw-r--r-- 1 root root 234K Jul 17 15:00 out/wo1wan.nro
+-rw-r--r-- 1 root root 234K Jul 17 15:04 out/wo1wan.nro
 NRO_EXIT=0
 == tool paths ==
 CC       = /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc
@@ -19,14 +19,14 @@ ELF2NSO  = /opt/devkitpro/tools/bin/elf2nso
 NPDMTOOL  = /opt/devkitpro/tools/bin/npdmtool
 NACPTOOL  = /opt/devkitpro/tools/bin/nacptool
 total 3224
-drwxr-xr-x 2 root root    4096 Feb 19 17:58 .
-drwxr-xr-x 3 root root    4096 Feb 19 17:57 ..
+drwxr-xr-x 2 root root    4096 Nov 17  2025 .
+drwxr-xr-x 3 root root    4096 Nov 17  2025 ..
 -rwxr-xr-x 1 root root   14712 May 21  2023 bin2s
 -rwxr-xr-x 1 root root   18584 May 21  2023 bmp2bin
 -rwxr-xr-x 1 root root   14528 Oct 23  2024 build_pfs0
 -rwxr-xr-x 1 root root   18712 Oct 23  2024 build_romfs
--rwxr-xr-x 1 root root    2664 Feb  3 21:02 catnip
--rw-r--r-- 1 root root      29 Feb  3 21:02 catnip.cmd
+-rwxr-xr-x 1 root root    2200 Apr 24  2024 catnip
+-rw-r--r-- 1 root root      29 Apr 24  2024 catnip.cmd
 -rwxr-xr-x 1 root root   47384 Oct 23  2024 elf2kip
 -rwxr-xr-x 1 root root   22816 Oct 23  2024 elf2nro
 -rwxr-xr-x 1 root root   67792 Oct 23  2024 elf2nso
@@ -39,6 +39,6 @@ drwxr-xr-x 3 root root    4096 Feb 19 17:57 ..
 -rwxr-xr-x 1 root root   14512 May 21  2023 raw2c
 -rwxr-xr-x 1 root root 2437712 Dec 17  2020 uam
 == compiling forwarder ==
-/opt/devkitpro/devkitA64/lib/gcc/aarch64-none-elf/15.2.0/../../../../aarch64-none-elf/bin/ld: read-only segment has dynamic relocations
+/opt/devkitpro/devkitA64/bin/../lib/gcc/aarch64-none-elf/15.1.0/../../../../aarch64-none-elf/bin/ld: read-only segment has dynamic relocations
 collect2: error: ld returned 1 exit status
 NSP_EXIT=1
