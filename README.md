@@ -41,10 +41,17 @@
 
 ## 安装到 Switch
 
-1. 把编译出的 `wo1wan.nro` 放到内存卡 `switch/wo1wan.nro`。
-2. 在 Switch 主页**按住 R 键**打开任意游戏进入 hbmenu，
-   在列表里选择 `wo1wan` 点击打开即可。
-3. 首次打开会进入「畅玩空间」**主页/登录页**，拿出手机扫屏幕上的微信/QQ二维码完成登录；登录成功后按 **A 键** 进入游戏大厅。
+⚠️ **必须从桌面图标启动，不能从 hbmenu 直接打开 `.nro`。**
+
+原因：Switch 的网页浏览器（Web Applet）只能在「应用程序（Application）」上下文里启动，
+而 hbmenu 是小程序（LibraryApplet）上下文，从它打开的 `.nro` 无法启动网页，
+会显示「无法使用此功能 / Unable to use this feature」。wiliwili 能开网页，
+也是因为它从桌面图标启动——它本身就是一个 Application 类型的 NSP 启动器。
+
+正确步骤：
+1. 下载 `wo1wan.nsp`，用 **DBI / Tesla 菜单 / Tinfoil** 安装到桌面（像装普通游戏一样）。
+2. 下载 `wo1wan.nro`，放到内存卡 `switch/wo1wan.nro`（被桌面图标自动加载，无需手动开）。
+3. 从桌面点击 wo1wan 图标打开，浏览器自动加载「畅玩空间」，扫码登录后即可玩。
 
 ## 自定义打开的网址
 

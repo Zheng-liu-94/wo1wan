@@ -14,17 +14,25 @@ wo1wan 是一个模仿 wiliwili 的 Switch 自制程序，
 ------------------ 安装方法 ------------------
 ---------------------------------------------
 
-1. 把编译出的 wo1wan.nro 放置在内存卡 switch/wo1wan.nro
-2. 在 Switch 主页 **按住 R 键** 打开任意一个应用进入 hbmenu，
-   在列表中选择 wo1wan 点击打开即可。
-3. 可选：从相册进入 hbmenu 打开 wo1wan 以安装桌面图标
+⚠️ 重要：wo1wan 必须从「桌面图标」启动，不能从 hbmenu 直接打开 .nro！
 
-操作流程：打开 wo1wan 后，先显示「畅玩空间」主页/登录页，请按屏幕提示用微信/QQ扫码；
-登录成功后按 A 键进入游戏大厅。退出网页后按 A 重新进入，按 + 退出程序。
+   原因：Switch 的网页浏览器（Web Applet）只能在「应用程序 Application」上下文里启动；
+   而 hbmenu 是小程序（LibraryApplet）上下文，从它打开的 .nro 无法启动网页，
+   会显示「无法使用此功能 / Unable to use this feature」。
+   wiliwili 能开网页，也是靠桌面图标——它本身就是一个 Application 类型的 NSP 启动器。
 
-注：安装第三方桌面图标和安装盗版游戏被 ban 的风险是相同的，后文有解读
+正确安装步骤：
+1. 下载 wo1wan.nsp（Application 启动器），用 DBI / 特斯拉菜单(Tesla) / Tinfoil 等工具
+   安装到 Switch 桌面（和安装普通游戏 NSP 一样）。
+2. 下载 wo1wan.nro（网页壳本体），放到内存卡 switch/wo1wan.nro
+   （这个 .nro 由桌面图标自动加载，你不需要、也不应该从 hbmenu 手动打开它）。
+3. 回到桌面，找到 wo1wan 图标，点击打开即可。
 
-桌面图标会优先尝试打开 switch/wo1wan.nro，如果其不存在，
+操作流程：从桌面图标打开 wo1wan 后，先显示「畅玩空间」主页/登录页，
+请按屏幕提示用微信/QQ 扫码；登录成功后网页里直接点游戏开玩。
+按 Switch 的 B 键可关闭浏览器回到桌面。
+
+注：桌面图标会优先尝试打开 switch/wo1wan.nro，如果其不存在，
 则打开 hbmenu 自行选择路径。
 
 ---------------------------------------------
