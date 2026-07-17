@@ -10,7 +10,7 @@ ELF2NRO="${DEVKITPRO}/tools/bin/elf2nro"
 NACPTOOL="${DEVKITPRO}/tools/bin/nacptool"
 
 ARCH="-march=armv8-a+crypto+crc -mtune=cortex-a57 -mtp=soft -fPIE"
-CFLAGS="-g -Wall -O2 ${ARCH} -I${DEVKITPRO}/libnx/include"
+CFLAGS="-g -Wall -O2 ${ARCH} -I${DEVKITPRO}/libnx/include -I${DEVKITPRO}/libnx/include/switch"
 LDFLAGS="-specs=${DEVKITPRO}/libnx/switch.specs -g ${ARCH}"
 LIBS="-L${DEVKITPRO}/libnx/lib -lnx"
 
