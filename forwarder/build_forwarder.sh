@@ -5,7 +5,7 @@
 # loads sdmc:/switch/wo1wan.nro as AppletType_SystemApplication -- the only
 # context allowed to launch the Web Applet.
 #
-set -e
+set -ex
 
 export DEVKITPRO=/opt/devkitpro
 LIBNX=$DEVKITPRO/libnx
@@ -40,8 +40,8 @@ echo "== compiling forwarder =="
     -c source/trampoline.s -o build/trampoline.o
 
 "$CC" build/main.o build/trampoline.o \
-    -specs="$LIBNX/switch.specs" -pie -g -L"$LIBNX/lib" -lnx \
-    -o build/wo1wan-forwarder.elf
+    -specs="$LIBNX/switch.specs" -g -L"$LIBNX/lib" -lnx \
+    -o build/wo1wan-forwarder.elf -pie
 
 # ---------------------------------------------------------------------------
 # 2. NSO + NPDM + NACP
