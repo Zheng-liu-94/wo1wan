@@ -51,8 +51,10 @@ jobs:
           git config --global user.name "wo1wan-ci"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/Zheng-liu-94/wo1wan.git"
+          # Save the freshly built log BEFORE switching branches (checkout would clobber it)
+          cp build_log.txt /tmp/wo1wan_build_log.txt 2>/dev/null || echo "no log file"
           git checkout -B ci-log
-          cp build_log.txt build_log.txt 2>/dev/null || echo "no log file"
+          cp /tmp/wo1wan_build_log.txt build_log.txt
           git add -f build_log.txt
           git commit -m "ci-debug: $(date -u +%Y%m%dT%H%M%SZ)" || echo "nothing to commit"
           git push -f origin ci-log
