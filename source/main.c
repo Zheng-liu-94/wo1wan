@@ -5,8 +5,11 @@
  * The website handles login (WeChat/QQ QR) and game navigation.
  *
  * Web Applet usage follows wiliwili's proven pattern:
- *   webPageCreate → webConfigSetWhitelist → webConfigShow(NULL)
- *   NO memset on WebCommonConfig — libnx manages internal state itself.
+ *   webPageCreate -> webConfigSetWhitelist -> webConfigShow(NULL)
+ *   NO memset on WebCommonConfig -- libnx manages internal state itself.
+ *
+ * Service initialization copied from wiliwili/borealis switch_wrapper.c:
+ *   socketInitialize, nifmInitialize, plInitialize, setsys, set, psm, lbl.
  *
  * Build: bash build.sh   Output: out/wo1wan.nro
  */
@@ -14,6 +17,7 @@
 #include <switch.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #define SITE_URL "https://play.wo1wan.com"
 
@@ -29,6 +33,54 @@ static const char *g_banner =
     "    A = re-open     + = quit\n"
     "\n";
 
+/* ------------------------------------------------------------------------ */
+/* Initialise all services required by a real Switch homebrew app.            */
+/* This mirrors wiliwili/borealis switch_wrapper.c exactly.                 */
+/* ------------------------------------------------------------------------ */
+static void wo1wanInitServices(void)
+{
+    SocketInitConfig cfg = *(socketGetDefaultInitConfig());
+    AppletType at        = appletGetAppletType();
+
+    appletLockExit();
+
+    if (at == AppletType_Application || at == AppletType_SystemApplication)
+    {
+        cfg.num_bsd_sessions = 12;
+        cfg.sb_efficiency    = 8;
+    }
+    else
+    {
+        cfg.num_bsd_sessions = 2;
+        cfg.sb_efficiency    = 1;
+    }
+    socketInitialize(&cfg);
+
+    romfsInit();
+    plInitialize(PlServiceType_User);
+    setsysInitialize();
+    setInitialize();
+    psmInitialize();
+    nifmInitialize(NifmServiceType_User);
+    lblInitialize();
+}
+
+/* ------------------------------------------------------------------------ */
+/* Exit services in reverse order.                                          */
+/* ------------------------------------------------------------------------ */
+static void wo1wanExitServices(void)
+{
+    lblExit();
+    nifmExit();
+    psmExit();
+    setExit();
+    setsysExit();
+    plExit();
+    romfsExit();
+    socketExit();
+    appletUnlockExit();
+}
+
 /* ======================================================================== */
 int main(int argc, char **argv)
 {
@@ -41,10 +93,11 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    /* Initialise services */
+    /* Initialise services (copy wiliwili pattern) */
     appletInitialize();
     hidInitialize();
     hidInitializeNpad();
+    wo1wanInitServices();
 
     consoleInit(NULL);
     printf("%s", g_banner);
@@ -56,14 +109,14 @@ int main(int argc, char **argv)
         consoleUpdate(NULL);
 
         /*
-         * Web Applet launch — exact same pattern as wiliwili/borealis:
+         * Web Applet launch -- exact same pattern as wiliwili/borealis:
          *
          * 1. Declare config on stack, do NOT memset/zero it.
          *    libnx's webPageCreate fills in internal fields; pre-zeroing
          *    corrupts those fields and causes kernel panic (0x1003).
          *
          * 2. Only set whitelist (same as wiliwili). No pointer/stick/audio
-         *    extras — keep it minimal to avoid triggering Atmosphere bugs.
+         *    extras -- keep it minimal to avoid triggering Atmosphere bugs.
          *
          * 3. Pass NULL for reply (same as wiliwili).
          */
@@ -125,6 +178,7 @@ int main(int argc, char **argv)
     consoleUpdate(NULL);
     consoleExit(NULL);
     hidExit();
+    wo1wanExitServices();
     appletExit();
     return 0;
 }
