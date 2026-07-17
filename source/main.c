@@ -10,12 +10,10 @@
  *   - 左摇杆 = 鼠标指针，触摸屏 = 直接触摸，方便操作网页游戏。
  *   - 想打开别的网站？改下面 GAME_URL 即可。
  *
- * 构建：在装有 devkitPro 的环境里执行 `make`，产物为 out/wo1wan.nro
+ * 构建：在装有 devkitPro 的环境里执行 `bash build.sh`，产物为 out/wo1wan.nro
  */
 
 #include <switch.h>
-#include <hid.h>
-#include <keycodes.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -37,15 +35,18 @@ static const char *g_banner =
 
 int main(int argc, char **argv)
 {
-    WebCommonConfig config;
-    WebCommonReply  reply;
-    Result rc;
+    WebCommonConfig    config;
+    WebCommonReply     reply;
+    Result             rc;
+    HidNpadSystemState npad;
+    u64                buttons;
 
     consoleInit(NULL);
     printf("%s", g_banner);
     consoleUpdate(NULL);
 
     hidInitialize();
+    hidInitializeNpad();
 
     while (1)
     {
@@ -89,14 +90,20 @@ int main(int argc, char **argv)
         printf("============================================\n");
         consoleUpdate(NULL);
 
-        /* 等待用户选择 */
+        /* 等待用户选择：A 重新进入，+ 退出 */
         while (1)
         {
             hidScanInput();
-            u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-            if (kDown & KEY_A)
+            memset(&npad, 0, sizeof(npad));
+            buttons = 0;
+            hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
+            buttons |= npad.buttons;
+            hidGetNpadStatesSystem(HidNpadIdType_No1, &npad, 1);
+            buttons |= npad.buttons;
+
+            if (buttons & HidNpadButton_A)
                 break;                 /* 重新进入大厅 */
-            if (kDown & KEY_PLUS)
+            if (buttons & HidNpadButton_Plus)
             {
                 consoleExit(NULL);
                 return 0;              /* 退出程序 */
@@ -110,7 +117,13 @@ int main(int argc, char **argv)
     while (appletMainLoop())
     {
         hidScanInput();
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_PLUS)
+        memset(&npad, 0, sizeof(npad));
+        buttons = 0;
+        hidGetNpadStatesSystem(HidNpadIdType_Handheld, &npad, 1);
+        buttons |= npad.buttons;
+        hidGetNpadStatesSystem(HidNpadIdType_No1, &npad, 1);
+        buttons |= npad.buttons;
+        if (buttons & HidNpadButton_Plus)
             break;
         svcSleepThread(10000000);
     }

@@ -14,18 +14,6 @@ CFLAGS="-g -Wall -O2 ${ARCH} -I${DEVKITPRO}/libnx/include -I${DEVKITPRO}/libnx/i
 LDFLAGS="-specs=${DEVKITPRO}/libnx/switch.specs -g ${ARCH}"
 LIBS="-L${DEVKITPRO}/libnx/lib -lnx"
 
-echo "=== DEBUG: locate libnx headers ==="
-echo "DEVKITPRO=${DEVKITPRO}"
-echo "--- ls libnx/include ---"
-ls -la ${DEVKITPRO}/libnx/include 2>/dev/null | head -50
-echo "--- find hid.h ---"
-find ${DEVKITPRO}/libnx -name 'hid.h' 2>/dev/null
-echo "--- find keycodes.h ---"
-find ${DEVKITPRO}/libnx -name 'keycodes.h' 2>/dev/null
-echo "--- find web.h ---"
-find ${DEVKITPRO}/libnx -name 'web.h' 2>/dev/null
-echo "=== END DEBUG ==="
-
 mkdir -p build out
 
 echo "=== 编译 main.c ==="
