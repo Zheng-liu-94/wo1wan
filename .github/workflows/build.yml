@@ -34,12 +34,12 @@ jobs:
           echo "NRO_EXIT=$?" >> build_log.txt
           tail -8 build_log.txt
 
-      - name: Build wo1wan.nsp (Application forwarder)
-        run: |
-          set +e
-          bash forwarder/build_forwarder.sh >> build_log.txt 2>&1
-          echo "NSP_EXIT=$?" >> build_log.txt
-          tail -8 build_log.txt
+      # NOTE: The hand-built forwarder .nsp (make_nsp.py) is a raw ExeFS PFS0
+      # WITHOUT NCA/CNMT, so title installers reject it ("content metadata not
+      # found"). A legit installable forwarder NSP requires hacbrewpack + the
+      # user's own prod.keys, which cannot live in public CI. We therefore no
+      # longer build/publish the .nsp. Users launch wo1wan.nro via title override
+      # (hold R + launch a game) instead. See README "在 Switch 上使用".
 
       - name: Upload build log (always)
         if: always()
@@ -70,7 +70,7 @@ jobs:
               content: data, sha: sha
             });
 
-      - name: Publish .nro and .nsp to GitHub Release (public download)
+      - name: Publish .nro to GitHub Release (public download)
         if: success()
         uses: actions/github-script@v7
         with:
@@ -89,28 +89,31 @@ jobs:
 
             // Get or create release
             let releaseId;
+            const body = 'Latest CI build.\n\n- wo1wan.nro : homebrew payload. Put on SD -> switch/wo1wan.nro, then launch via TITLE OVERRIDE (hold R + launch a game to open hbmenu), NOT the Album. See README.\n\nNo .nsp is provided: a legit installable forwarder NSP needs hacbrewpack + your own prod.keys (copyrighted), which public CI cannot supply.';
             try {
               const r = await github.rest.repos.getReleaseByTag({ owner, repo, tag: tag });
               releaseId = r.data.id;
+              await github.rest.repos.updateRelease({ owner, repo, release_id: releaseId, body });
             } catch (e) {
               const r = await github.rest.repos.createRelease({
                 owner, repo, tag_name: tag, name: 'wo1wan latest',
-                body: 'Latest CI build.\n\n- wo1wan.nro : homebrew payload (put on SD -> switch/wo1wan.nro)\n- wo1wan.nsp : Application forwarder (install to home menu; launches the .nro as SystemApplication so the Web Applet works)',
-                prerelease: true
+                body, prerelease: true
               });
               releaseId = r.data.id;
             }
 
             const assets = [
               { name: 'wo1wan.nro', path: 'out/wo1wan.nro' },
-              { name: 'wo1wan.nsp', path: 'forwarder/wo1wan.nsp' },
             ];
+            // Names to remove if present (stale / broken uploads)
+            const removeNames = ['wo1wan.nro', 'wo1wan.nsp'];
 
-            // Delete stale assets
+            // Delete stale assets (including the broken wo1wan.nsp)
             const r = await github.rest.repos.getRelease({ owner, repo, release_id: releaseId });
-            for (const a of assets) {
-              const old = r.data.assets.find(x => x.name === a.name);
-              if (old) await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: old.id });
+            for (const old of r.data.assets) {
+              if (removeNames.includes(old.name)) {
+                await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: old.id });
+              }
             }
 
             // Upload fresh assets
@@ -121,4 +124,4 @@ jobs:
                 headers: { 'content-type': 'application/octet-stream', 'content-length': data.length }
               });
             }
-            console.log('Released wo1wan.nro and wo1wan.nsp');
+            console.log('Released wo1wan.nro (no .nsp)');
