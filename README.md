@@ -33,42 +33,55 @@
 
 > Windows 上若 `DEVKITPRO` 没自动设置：`make DEVKITPRO=/c/devkitpro`
 
-### 方式二：构建 Application 启动器 `.nsp`（桌面图标）
+### 方式二：用 GitHub Actions 自动出包（无需本地工具链）
 
-`.nro` 只能从 hbmenu 打开（LibraryApplet 上下文），无法启动网页。要从桌面图标启动、
-让 Web Applet 以 Application 上下文运行，需要这个 NSP forwarder：
-
-```bash
-bash forwarder/build_forwarder.sh
-```
-
-产物：`wo1wan/forwarder/wo1wan.nsp`（无任天堂签名的 ExeFS PFS0，Atmosphere 的 DBI/Tesla/Tinfoil 可直接安装）。
-
-### 方式三：用 GitHub Actions 自动出包（无需本地工具链）
-
-把本仓库推送到 GitHub，Actions 会自动编译并在 **Release（latest）** 里同时给出
-`wo1wan.nro` 和 `wo1wan.nsp` 两个文件：
+把本仓库推送到 GitHub，Actions 会自动编译并在 **Release（latest）** 里给出 `wo1wan.nro`：
 
 - nro: `https://github.com/Zheng-liu-94/wo1wan/releases/download/latest/wo1wan.nro`
-- nsp: `https://github.com/Zheng-liu-94/wo1wan/releases/download/latest/wo1wan.nsp`
 
 （见 `.github/workflows/build.yml`）
 
-## 安装到 Switch
+> 关于 `.nsp` 桌面图标：需要用户自己的 `prod.keys` 才能用 hacbrewpack 打包成合法可安装 NSP
+> （见下方「桌面图标」一节）。CI 无法提供密钥，因此不再产出 `.nsp`。
 
-两个安装包都从 GitHub Release 下载（见上方「方式三」的链接），分别是 `wo1wan.nsp`（桌面图标启动器）和 `wo1wan.nro`（网页壳本体）。
+## 在 Switch 上使用
 
-⚠️ **必须从桌面图标启动，不能从 hbmenu 直接打开 `.nro`。**
+⚠️ **关键：不要从「相册」打开 hbmenu，必须「按住 R 键启动一个游戏」来打开 hbmenu。**
 
-原因：Switch 的网页浏览器（Web Applet）只能在「应用程序（Application）」上下文里启动，
-而 hbmenu 是小程序（LibraryApplet）上下文，从它打开的 `.nro` 无法启动网页，
-会显示「无法使用此功能 / Unable to use this feature」。wiliwili 能开网页，
-也是因为它从桌面图标启动——它本身就是一个 Application 类型的 NSP 启动器。
+原因：Switch 的网页浏览器（Web Applet）只能在 **Application 上下文** 里启动。
 
-正确步骤：
-1. 下载 `wo1wan.nsp`，用 **DBI / Tesla 菜单 / Tinfoil** 安装到桌面（像装普通游戏一样）。
-2. 下载 `wo1wan.nro`，放到内存卡 `switch/wo1wan.nro`（被桌面图标自动加载，无需手动开）。
-3. 从桌面点击 wo1wan 图标打开，浏览器自动加载「畅玩空间」，扫码登录后即可玩。
+| 打开 hbmenu 的方式 | 上下文 | 能开浏览器吗 |
+| --- | --- | --- |
+| 点「相册」进 | applet 模式（LibraryApplet） | ❌ 系统禁止，白屏「无法使用此功能」 |
+| **按住 R 键**再点游戏进 | 标题接管 title override（Application） | ✅ 可以 |
+
+官方教程（switch.hacks.guide）明确：用相册打开 hbmenu「无法启动完整网页浏览器」，
+建议按住 R 启动游戏。这是纯系统限制，与本软件无关。
+
+正确步骤（免安装、免密钥）：
+1. 下载 `wo1wan.nro`，放到内存卡 `switch/wo1wan.nro`。
+2. Switch 桌面「按住 R 键」不放 → 点开任意已安装游戏 → 继续按住 R 直到 hbmenu 出现。
+   （游戏要选账号时：先点游戏 → 等选账号画面 → 这时再按住 R 选账号，一直按住到 hbmenu）
+3. 确认右上角**没有**红字 `Applet Mode`（有红字说明还在相册模式，重来）。
+4. 在 hbmenu 里点 wo1wan，浏览器自动加载「畅玩空间」，扫码登录后即可玩。
+
+### 桌面图标（可选，需要你自己的 prod.keys）
+
+想像 wiliwili 那样从桌面图标直接打开（不用每次按 R），需要一个 Application 类型的
+可安装 NSP。打包它必须用从**你自己主机 dump** 出来的 `prod.keys`（受版权保护，仓库/CI
+无法提供）。步骤：
+
+1. 用 Lockpick_RCM dump 出 `prod.keys`。
+2. 本地装 devkitPro + hacbrewpack，参考 wiliwili 的 `scripts/switch-forwarder/pack.sh`：
+   ```bash
+   # forwarder/ 目录已备好 exefs(main/main.npdm)、control(nacp/icon)、logo
+   hacbrewpack -k prod.keys --titleid 010ff000ffff0002 --titlename wo1wan --noromfs
+   ```
+3. 得到的 NSP 用 DBI/Tinfoil 安装，桌面会出现图标。
+
+> 注意：旧版 `forwarder/build_forwarder.sh` / `make_nsp.py` 生成的是**裸 ExeFS PFS0**，
+> 不含 NCA/CNMT，安装器会报「未找到内容元数据」而失败——这不是合法可安装 NSP，
+> 仅作历史保留。请用上面的 hacbrewpack 方式，或直接用「按住 R」免安装方法。
 
 ## 自定义打开的网址
 

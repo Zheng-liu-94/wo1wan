@@ -11,32 +11,35 @@ wo1wan 是一个模仿 wiliwili 的 Switch 自制程序，
 把你浏览器里的「畅玩空间」网页游戏，变成掌机上能直接开玩的应用。
 
 ---------------------------------------------
------------------- 安装方法 ------------------
+------------------ 使用方法 ------------------
 ---------------------------------------------
 
-⚠️ 重要：wo1wan 必须从「桌面图标」启动，不能从 hbmenu 直接打开 .nro！
+⚠️ 最重要：不要从「相册」打开 hbmenu！必须用「按住 R 键启动游戏」的方式打开！
 
-   原因：Switch 的网页浏览器（Web Applet）只能在「应用程序 Application」上下文里启动；
-   而 hbmenu 是小程序（LibraryApplet）上下文，从它打开的 .nro 无法启动网页，
-   会显示「无法使用此功能 / Unable to use this feature」。
-   wiliwili 能开网页，也是靠桌面图标——它本身就是一个 Application 类型的 NSP 启动器。
+   原因：Switch 的网页浏览器（Web Applet）只能在「Application 上下文」里启动。
+   · 点相册进 hbmenu = applet 模式：内存小，系统禁止开浏览器 → 白屏「无法使用此功能」
+   · 按住 R 键点游戏进 hbmenu = 标题接管(title override)：完整内存 + 浏览器可用 ✅
+   官方教程原文：用相册打开 hbmenu「无法启动完整网页浏览器」，建议按住 R 启动游戏。
 
-正确安装步骤：
-两个安装包都从 GitHub Release 下载（仓库 Zheng-liu-94/wo1wan，找 latest 版本）：
-  · wo1wan.nsp  （桌面图标启动器）
-  · wo1wan.nro  （网页壳本体）
-1. 下载 wo1wan.nsp（Application 启动器），用 DBI / 特斯拉菜单(Tesla) / Tinfoil 等工具
-   安装到 Switch 桌面（和安装普通游戏 NSP 一样）。
-2. 下载 wo1wan.nro（网页壳本体），放到内存卡 switch/wo1wan.nro
-   （这个 .nro 由桌面图标自动加载，你不需要、也不应该从 hbmenu 手动打开它）。
-3. 回到桌面，找到 wo1wan 图标，点击打开即可。
+推荐方法（免安装、免密钥、现在就能用）：
+1. 下载 wo1wan.nro（网页壳本体），放到内存卡 switch/wo1wan.nro
+   下载地址：https://github.com/Zheng-liu-94/wo1wan/releases（找 latest）
+2. 在 Switch 桌面「按住 R 键」不放，再点开任意一个已安装的游戏，
+   继续按住 R 直到出现 hbmenu。
+   （若游戏要先选账号：先点游戏 → 等选账号画面 → 这时再按住 R 选账号，一直按住到 hbmenu）
+3. 看右上角：有红字「Applet Mode」= 没进对，重来；没有红字 = 成功。
+4. 在 hbmenu 里点 wo1wan，浏览器就会打开「畅玩空间」。
 
-操作流程：从桌面图标打开 wo1wan 后，先显示「畅玩空间」主页/登录页，
-请按屏幕提示用微信/QQ 扫码；登录成功后网页里直接点游戏开玩。
-按 Switch 的 B 键可关闭浏览器回到桌面。
+操作：左摇杆=鼠标指针，A=点击，触屏游戏可直接手指点，B=关闭浏览器。
+登录：需要登录时屏幕会显示微信/QQ 二维码，手机扫码即可（同 wiliwili 扫码机制）。
 
-注：桌面图标会优先尝试打开 switch/wo1wan.nro，如果其不存在，
-则打开 hbmenu 自行选择路径。
+关于「桌面图标」(可选，需要你自己的 prod.keys)：
+   想像 wiliwili 那样在桌面有个图标点开，需要一个 Application 类型 NSP。
+   打包这个合法 NSP 必须用从你自己主机 dump 出来的 prod.keys 密钥（受版权保护，
+   无法提供）。旧版 Release 里的 wo1wan.nsp 是裸包、装不了（提示"未找到内容元数据"），
+   请忽略它，直接用上面「按住 R」的方法即可，效果完全一样。
+   如需自己打包桌面图标，参考 wiliwili 的 scripts/switch-forwarder/pack.sh：
+     hacbrewpack -k prod.keys --titleid 010ff000ffff0002 --titlename wo1wan --noromfs
 
 ---------------------------------------------
 --------------- 如果你遇到了问题 ---------------
@@ -55,10 +58,10 @@ wo1wan 是一个模仿 wiliwili 的 Switch 自制程序，
 4. 打开应用黑屏时间过长，可以尝试删除内存卡目录 config/wo1wan 重新进入
   > wo1wan 本身不写 config，此条主要防 hbmenu/系统缓存异常
 
-5. 无法从桌面图标进入软件 / 点了图标没反应
-  > 先确认桌面真的出现了 wo1wan 图标（说明 .nsp 安装成功）；
-  > 再确认内存卡根目录下的 switch/wo1wan.nro 存在且没改名；
-  > 如仍不行，重新拷贝一次 wo1wan.nsp 和 wo1wan.nro，优先用最新版。
+5. 白屏「无法使用此功能」/ hbmenu 里点 wo1wan 没反应
+  > 看右上角有没有红字「Applet Mode」。有 = 你从相册进的，浏览器被禁。
+  > 必须「按住 R 键」再点一个游戏来进 hbmenu（标题接管模式），右上角无红字才对。
+  > 再确认内存卡 switch/wo1wan.nro 存在且没改名。
 
 ---------------------------------------------
 ---- 如果你需要反馈问题 ❗️❗️❗️必读 ❗️❗️❗️ -----
@@ -109,4 +112,4 @@ wo1wan 是一个模仿 wiliwili 的 Switch 自制程序，
 推荐下载 [HB App Store](https://github.com/fortheusers/hb-appstore)，
 或按项目 README 在本机用 devkitPro 执行 `make` 重新编译出 wo1wan.nro。
 
-如果想自己改打开的网址：编辑 source/main.c 顶部的 GAME_URL 后重新 make。
+如果想自己改打开的网址：编辑 source/main.c 顶部的 SITE_URL 后重新 make / bash build.sh。
