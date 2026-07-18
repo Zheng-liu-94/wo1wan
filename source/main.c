@@ -130,6 +130,46 @@ int main(int argc, char **argv)
     appletInitialize();
     hidInitialize();
     hidInitializeNpad();
+
+    /* ------------------------------------------------------------------
+     * CONTEXT GUARD (critical)
+     *
+     * The Switch Web Applet can ONLY be launched from an Application
+     * context. If this .nro is started from hbmenu that itself runs in
+     * LibraryApplet context (e.g. opened via the Album / "相册"),
+     * webConfigShow() triggers a kernel fatal (0x1003) and the system
+     * shows "由于发生错误，软件已关闭".
+     *
+     * Detect the context up front and show clear guidance instead of
+     * crashing. The user must launch via title override: hold R on a
+     * game to enter hbmenu, then run this .nro (hbmenu then runs in
+     * Application context).
+     * ------------------------------------------------------------------ */
+    {
+        AppletType t = appletGetAppletType();
+        if (t != AppletType_Application && t != AppletType_SystemApplication)
+        {
+            consoleInit(NULL);
+            printf("\n!! 运行环境不正确 (AppletType=%d)\n\n", (int)t);
+            printf("  Web Applet 只能在「应用程序」上下文启动。\n");
+            printf("  你当前是从 hbmenu(LibraryApplet) 启动的，\n");
+            printf("  系统会拒绝打开浏览器并导致崩溃。\n\n");
+            printf("  正确做法：\n");
+            printf("   1. 回到桌面，按住 R 键不放\n");
+            printf("   2. 点开任意一个已安装的游戏\n");
+            printf("   3. 保持按住 R 直到出现 hbmenu\n");
+            printf("   4. 在 hbmenu 里点 wo1wan\n");
+            printf("   （右上角没有红字 Applet Mode 即成功）\n\n");
+            printf("  按 + 退出。\n");
+            consoleUpdate(NULL);
+            wo1wanWaitForButton(HidNpadButton_Plus);
+            consoleExit(NULL);
+            hidExit();
+            appletExit();
+            return 0;
+        }
+    }
+
     wo1wanInitServices();
 
     /* Show a brief banner, then release the console before Web Applet. */
