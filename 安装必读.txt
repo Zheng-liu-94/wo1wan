@@ -22,6 +22,9 @@ wo1wan 是一个模仿 wiliwili 的 Switch 自制程序，
    wiliwili 能开网页，也是靠桌面图标——它本身就是一个 Application 类型的 NSP 启动器。
 
 正确安装步骤：
+两个安装包都从 GitHub Release 下载（仓库 Zheng-liu-94/wo1wan，找 latest 版本）：
+  · wo1wan.nsp  （桌面图标启动器）
+  · wo1wan.nro  （网页壳本体）
 1. 下载 wo1wan.nsp（Application 启动器），用 DBI / 特斯拉菜单(Tesla) / Tinfoil 等工具
    安装到 Switch 桌面（和安装普通游戏 NSP 一样）。
 2. 下载 wo1wan.nro（网页壳本体），放到内存卡 switch/wo1wan.nro
@@ -52,8 +55,10 @@ wo1wan 是一个模仿 wiliwili 的 Switch 自制程序，
 4. 打开应用黑屏时间过长，可以尝试删除内存卡目录 config/wo1wan 重新进入
   > wo1wan 本身不写 config，此条主要防 hbmenu/系统缓存异常
 
-5. 无法从桌面图标进入软件
-  > 请换个更好更新的整合包 / 重新拷贝 wo1wan.nro
+5. 无法从桌面图标进入软件 / 点了图标没反应
+  > 先确认桌面真的出现了 wo1wan 图标（说明 .nsp 安装成功）；
+  > 再确认内存卡根目录下的 switch/wo1wan.nro 存在且没改名；
+  > 如仍不行，重新拷贝一次 wo1wan.nsp 和 wo1wan.nro，优先用最新版。
 
 ---------------------------------------------
 ---- 如果你需要反馈问题 ❗️❗️❗️必读 ❗️❗️❗️ -----

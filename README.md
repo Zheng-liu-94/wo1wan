@@ -18,28 +18,45 @@
 
 ## 构建
 
-### 方式一：本地用 devkitPro 编译（推荐，几秒出包）
+### 方式一：本地用 devkitPro 编译 `.nro`（网页壳本体）
 
 1. 安装 devkitPro，并确保装好 Switch 组件：
    ```bash
-   # 在 devkitPro 的 MSYS2 / 终端里执行
    dkp-pacman -S switch-dev
    ```
-2. 在项目目录执行：
+2. 在项目目录执行（任选其一）：
    ```bash
-   make
+   make             # 用 Makefile
+   bash build.sh    # 等价脚本，CI 用的就是这个
    ```
 3. 产物：`out/wo1wan.nro`
 
-> Windows 上若 `DEVKITPRO` 没自动设置，可手动指定：
-> `make DEVKITPRO=/c/devkitpro`
+> Windows 上若 `DEVKITPRO` 没自动设置：`make DEVKITPRO=/c/devkitpro`
 
-### 方式二：用 GitHub Actions 自动出包（无需本地工具链）
+### 方式二：构建 Application 启动器 `.nsp`（桌面图标）
 
-把本仓库推送到 GitHub，Actions 会自动编译并在 **Artifacts** 里给出 `wo1wan.nro`。
+`.nro` 只能从 hbmenu 打开（LibraryApplet 上下文），无法启动网页。要从桌面图标启动、
+让 Web Applet 以 Application 上下文运行，需要这个 NSP forwarder：
+
+```bash
+bash forwarder/build_forwarder.sh
+```
+
+产物：`wo1wan/forwarder/wo1wan.nsp`（无任天堂签名的 ExeFS PFS0，Atmosphere 的 DBI/Tesla/Tinfoil 可直接安装）。
+
+### 方式三：用 GitHub Actions 自动出包（无需本地工具链）
+
+把本仓库推送到 GitHub，Actions 会自动编译并在 **Release（latest）** 里同时给出
+`wo1wan.nro` 和 `wo1wan.nsp` 两个文件：
+
+- nro: `https://github.com/Zheng-liu-94/wo1wan/releases/download/latest/wo1wan.nro`
+- nsp: `https://github.com/Zheng-liu-94/wo1wan/releases/download/latest/wo1wan.nsp`
+
 （见 `.github/workflows/build.yml`）
 
 ## 安装到 Switch
+
+两个安装包都从 GitHub Release 下载（见上方「方式三」的链接），分别是 `wo1wan.nsp`（桌面图标启动器）和 `wo1wan.nro`（网页壳本体）。
 
 ⚠️ **必须从桌面图标启动，不能从 hbmenu 直接打开 `.nro`。**
 
@@ -55,19 +72,19 @@
 
 ## 自定义打开的网址
 
-编辑 `source/main.c` 顶部的两个宏：
+编辑 `source/main.c` 顶部（第 26 行附近）的宏：
 
 ```c
-#define HOME_URL  "https://play.wo1wan.com"                 /* 登录页 */
-#define GAME_URL  "https://play.wo1wan.com/nextgame/pc/#/"  /* 游戏大厅 */
+#define SITE_URL "https://play.wo1wan.com"
 ```
 
-改成任意网页后重新 `make` 即可。例如把 `HOME_URL` 改成网站的移动版登录页，可能会获得更好的扫码体验。
+改成任意网页后重新 `make`（或 `bash build.sh`）即可。例如改成网站的移动版登录页，可能会获得更好的扫码体验。
 
 ## 替换图标
 
-`icon.jpg` 是显示在 hbmenu 里的图标（当前为占位图）。
-换成你自己的 **256×256 JPEG** 再 `make` 即可。
+根目录 `icon.jpg` 用于 `.nro`（在 hbmenu 里显示）；
+`forwarder/icon.jpg` 用于 `.nsp`（桌面图标）。
+换成你自己的 **256×256 JPEG** 再重新构建对应目标即可。
 
 ## 已知限制
 
