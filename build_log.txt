@@ -4,101 +4,12 @@
 NACPTOOL=/opt/devkitpro/tools/bin/nacptool
 nacptool rc=0
 total 3708
-drwxr-xr-x 2 root root    4096 Jul 18 05:24 .
-drwxr-xr-x 8 1001 1001    4096 Jul 18 05:24 ..
--rw-r--r-- 1 root root   31200 Jul 18 05:24 main.o
--rwxr-xr-x 1 root root 3797080 Jul 18 05:24 wo1wan.elf
--rw-r--r-- 1 root root   16384 Jul 18 05:24 wo1wan.nacp
+drwxr-xr-x 2 root root    4096 Jul 18 05:27 .
+drwxr-xr-x 8 1001 1001    4096 Jul 18 05:27 ..
+-rw-r--r-- 1 root root   31200 Jul 18 05:27 main.o
+-rwxr-xr-x 1 root root 3797080 Jul 18 05:27 wo1wan.elf
+-rw-r--r-- 1 root root   16384 Jul 18 05:27 wo1wan.nacp
 === 生成 .nro ===
 === 完成 ===
--rw-r--r-- 1 root root 234K Jul 18 05:24 out/wo1wan.nro
+-rw-r--r-- 1 root root 234K Jul 18 05:27 out/wo1wan.nro
 NRO_EXIT=0
-+ export DEVKITPRO=/opt/devkitpro
-+ DEVKITPRO=/opt/devkitpro
-+ LIBNX=/opt/devkitpro/libnx
-+ TOOLSBIN=/opt/devkitpro/tools/bin
-+ CC=/opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc
-++ command -v elf2nso
-+ ELF2NSO=/opt/devkitpro/tools/bin/elf2nso
-++ command -v npdmtool
-+ NPDMTOOL=/opt/devkitpro/tools/bin/npdmtool
-++ command -v nacptool
-+ NACPTOOL=/opt/devkitpro/tools/bin/nacptool
-+ echo '== tool paths =='
-== tool paths ==
-+ echo 'CC       = /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc'
-CC       = /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc
-+ echo 'ELF2NSO  = /opt/devkitpro/tools/bin/elf2nso'
-ELF2NSO  = /opt/devkitpro/tools/bin/elf2nso
-+ echo 'NPDMTOOL  = /opt/devkitpro/tools/bin/npdmtool'
-NPDMTOOL  = /opt/devkitpro/tools/bin/npdmtool
-+ echo 'NACPTOOL  = /opt/devkitpro/tools/bin/nacptool'
-NACPTOOL  = /opt/devkitpro/tools/bin/nacptool
-+ ls -la /opt/devkitpro/tools/bin
-+ head -40
-total 3224
-drwxr-xr-x 2 root root    4096 Nov 17  2025 .
-drwxr-xr-x 3 root root    4096 Nov 17  2025 ..
--rwxr-xr-x 1 root root   14712 May 21  2023 bin2s
--rwxr-xr-x 1 root root   18584 May 21  2023 bmp2bin
--rwxr-xr-x 1 root root   14528 Oct 23  2024 build_pfs0
--rwxr-xr-x 1 root root   18712 Oct 23  2024 build_romfs
--rwxr-xr-x 1 root root    2200 Apr 24  2024 catnip
--rw-r--r-- 1 root root      29 Apr 24  2024 catnip.cmd
--rwxr-xr-x 1 root root   47384 Oct 23  2024 elf2kip
--rwxr-xr-x 1 root root   22816 Oct 23  2024 elf2nro
--rwxr-xr-x 1 root root   67792 Oct 23  2024 elf2nso
--rwxr-xr-x 1 root root    2119 May 21  2023 generate_compile_commands
--rwxr-xr-x 1 root root  458976 Feb 24  2022 hactool
--rwxr-xr-x 1 root root   14464 Oct 23  2024 nacptool
--rwxr-xr-x 1 root root   43288 Oct 23  2024 npdmtool
--rwxr-xr-x 1 root root   64264 Oct 23  2024 nxlink
--rwxr-xr-x 1 root root   14456 May 21  2023 padbin
--rwxr-xr-x 1 root root   14512 May 21  2023 raw2c
--rwxr-xr-x 1 root root 2437712 Dec 17  2020 uam
-++ dirname forwarder/build_forwarder.sh
-+ cd forwarder
-+ mkdir -p build exefs control
-+ echo '== compiling forwarder =='
-== compiling forwarder ==
-+ /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -g -O2 -Wall -I/opt/devkitpro/libnx/include -D__SWITCH__ '-DVERSION="v1.0.0"' -c source/main.c -o build/main.o
-+ /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE -g -O2 -Wall -I/opt/devkitpro/libnx/include -D__SWITCH__ -c source/trampoline.s -o build/trampoline.o
-+ /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc build/main.o build/trampoline.o -specs=/opt/devkitpro/libnx/switch.specs -g -L/opt/devkitpro/libnx/lib -lnx -o build/wo1wan-forwarder.elf -pie -Wl,-z,notext
-+ echo '== verify ELF type =='
-== verify ELF type ==
-+ /opt/devkitpro/devkitA64/bin/aarch64-none-elf-readelf -h build/wo1wan-forwarder.elf
-+ grep -E 'Type:|Machine:'
-  Type:                              DYN (Position-Independent Executable file)
-  Machine:                           AArch64
-+ echo '== packaging exefs/control =='
-== packaging exefs/control ==
-+ /opt/devkitpro/tools/bin/elf2nso build/wo1wan-forwarder.elf exefs/main
-+ /opt/devkitpro/tools/bin/npdmtool wo1wan.json exefs/main.npdm
-Failed to get system_resource_size (field not present).
-Failed to get version (field not present).
-Failed to get process_category (field not present).
-Failed to get optimize_memory_allocation (field not present).
-Failed to get disable_device_address_space_merge (field not present).
-Failed to get enable_alias_region_extra_size (field not present).
-Failed to get prevent_code_reads (field not present).
-Failed to get signature_key_generation (field not present).
-Failed to get program_id_range_min (field not present).
-Failed to get program_id_range_max (field not present).
-Failed to get program_id (field not present).
-+ /opt/devkitpro/tools/bin/nacptool --create wo1wan wo1wan 1.0.0 control/control.nacp
-+ cp icon.jpg control/icon_AmericanEnglish.dat
-+ echo '== building wo1wan.nsp (PFS0) =='
-== building wo1wan.nsp (PFS0) ==
-+ python3 make_nsp.py wo1wan.nsp
-Wrote wo1wan.nsp: 76897 bytes (4 files)
-+ ls -lh wo1wan.nsp
--rw-r--r-- 1 root root 76K Jul 18 05:24 wo1wan.nsp
-+ echo '== verify PFS0 magic =='
-== verify PFS0 magic ==
-+ head -c 4 wo1wan.nsp
-+ od -c
-+ head -1
-0000000   P   F   S   0
-+ echo FORWARDER_BUILD_OK
-FORWARDER_BUILD_OK
-NSP_EXIT=0
