@@ -4,14 +4,14 @@
 NACPTOOL=/opt/devkitpro/tools/bin/nacptool
 nacptool rc=0
 total 3708
-drwxr-xr-x 2 root root    4096 Jul 18 04:46 .
-drwxr-xr-x 8 1001 1001    4096 Jul 18 04:46 ..
--rw-r--r-- 1 root root   31200 Jul 18 04:46 main.o
--rwxr-xr-x 1 root root 3797080 Jul 18 04:46 wo1wan.elf
--rw-r--r-- 1 root root   16384 Jul 18 04:46 wo1wan.nacp
+drwxr-xr-x 2 root root    4096 Jul 18 04:54 .
+drwxr-xr-x 8 1001 1001    4096 Jul 18 04:54 ..
+-rw-r--r-- 1 root root   31200 Jul 18 04:54 main.o
+-rwxr-xr-x 1 root root 3797080 Jul 18 04:54 wo1wan.elf
+-rw-r--r-- 1 root root   16384 Jul 18 04:54 wo1wan.nacp
 === 生成 .nro ===
 === 完成 ===
--rw-r--r-- 1 root root 234K Jul 18 04:46 out/wo1wan.nro
+-rw-r--r-- 1 root root 234K Jul 18 04:54 out/wo1wan.nro
 NRO_EXIT=0
 + export DEVKITPRO=/opt/devkitpro
 + DEVKITPRO=/opt/devkitpro
@@ -66,8 +66,8 @@ drwxr-xr-x 3 root root    4096 Nov 17  2025 ..
 + /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc build/main.o build/trampoline.o -specs=/opt/devkitpro/libnx/switch.specs -g -L/opt/devkitpro/libnx/lib -lnx -o build/wo1wan-forwarder.elf -pie -Wl,-z,notext
 + echo '== verify ELF type =='
 == verify ELF type ==
-+ /opt/devkitpro/devkitA64/bin/aarch64-none-elf-readelf -h build/wo1wan-forwarder.elf
 + grep -E 'Type:|Machine:'
++ /opt/devkitpro/devkitA64/bin/aarch64-none-elf-readelf -h build/wo1wan-forwarder.elf
   Type:                              DYN (Position-Independent Executable file)
   Machine:                           AArch64
 + echo '== packaging exefs/control =='
@@ -92,7 +92,7 @@ Failed to get program_id (field not present).
 + python3 make_nsp.py wo1wan.nsp
 Wrote wo1wan.nsp: 76897 bytes (4 files)
 + ls -lh wo1wan.nsp
--rw-r--r-- 1 root root 76K Jul 18 04:46 wo1wan.nsp
+-rw-r--r-- 1 root root 76K Jul 18 04:54 wo1wan.nsp
 + echo '== verify PFS0 magic =='
 == verify PFS0 magic ==
 + head -c 4 wo1wan.nsp
