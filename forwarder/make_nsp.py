@@ -47,8 +47,10 @@ def main():
     string_table_size = len(string_table)
     header_size = 0x10 + 0x18 * num_files + string_table_size
 
+    # Canonical PFS0 header (MUST be 16 bytes): magic + num_files + string_table_size + reserved.
+    # Atmosphere's NSP installer reads num_files at offset 0x04; an extra "version" field here
+    # would shift it to 0x08 and make the installer see 0 files -> install fails.
     header = b"PFS0"
-    header += struct.pack("<I", 0)            # version
     header += struct.pack("<I", num_files)     # num_files
     header += struct.pack("<I", string_table_size)
     header += struct.pack("<I", 0)            # reserved
